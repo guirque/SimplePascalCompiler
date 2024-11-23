@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 
 import Controller from "../../Domain/Interfaces/Controller";
 import ILexicalAnalysis from "../../Domain/Interfaces/ILexicalAnalysis";
+import compilationResponse from "../../Domain/Interfaces/CompilationResponse";
+import log from "../../Domain/Interfaces/Log";
 
 export default class LexicalAnalysisController implements Controller
 {
@@ -9,9 +11,22 @@ export default class LexicalAnalysisController implements Controller
 
     async execute(req: Request, res: Response): Promise<any> {
 
-        const code:string = req?.body?.code;
-       console.log("<!> Lexical Analysis Running");
-       const tokenList = code ? await this.lexicalService.generateTokenList(this.symbols, code) : [];
-       return res.status(200).send(tokenList);
+        let code:string = req?.body?.code;
+        let answer: compilationResponse;
+
+       if(code) code = JSON.parse(code);
+
+       let logObj: log = {errors: [], warnings: []};
+       const tokenList = code ? await this.lexicalService.generateTokenList(this.symbols, code, logObj) : [];
+
+       answer = 
+       {
+            lexical: tokenList,
+            syntatic: undefined,
+            semantic: undefined,
+            errors: logObj.errors,
+            warnings: logObj.warnings
+       }
+       return res.status(200).send(answer);
     }   
 }
