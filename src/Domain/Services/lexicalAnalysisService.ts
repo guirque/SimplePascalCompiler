@@ -33,7 +33,8 @@ export default class LexicalAnalysisService implements ILexicalAnalysis
                 let classification = 'ERROR';
                 //Find classification
                 symbolsList.find((pair:[string, RegExp])=>{
-                    if(pair[1].test(separatedElement))
+                    let comparisonRegEx = new RegExp(`^(${pair[1].source})$`);
+                    if(comparisonRegEx.test(separatedElement))
                         {
                             classification = pair[0];
                             return true;
