@@ -32,6 +32,7 @@ const simplePascalSymbols =
     ELSE: /else/,
     FOR: /for/,
     TO: /to/,
+    OF: /of/,
     WRITE: /write/,
     READ: /read/,
     BOOLEAN: /true|false/,
