@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 
+import compilationResponse from "../../Domain/Interfaces/CompilationResponse";
 import Controller from "../../Domain/Interfaces/Controller";
 import ILexicalAnalysis from "../../Domain/Interfaces/ILexicalAnalysis";
-import compilationResponse from "../../Domain/Interfaces/CompilationResponse";
 import log from "../../Domain/Interfaces/Log";
 
 export default class LexicalAnalysisController implements Controller
@@ -22,8 +22,6 @@ export default class LexicalAnalysisController implements Controller
        answer = 
        {
             lexical: tokenList,
-            syntatic: undefined,
-            semantic: undefined,
             errors: logObj.errors,
             warnings: logObj.warnings
        }

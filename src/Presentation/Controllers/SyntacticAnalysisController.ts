@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 
 import tree from "../../Domain/Entities/tree";
+import compilationResponse from "../../Domain/Interfaces/CompilationResponse";
 import Controller from "../../Domain/Interfaces/Controller";
 import ILexicalAnalysis from "../../Domain/Interfaces/ILexicalAnalysis";
 import ISyntacticAnalysis from "../../Domain/Interfaces/ISyntacticAnalysis";
 import log from "../../Domain/Interfaces/Log";
-import compilationResponse from "../../Domain/Interfaces/CompilationResponse";
 
 export default class SyntacticAnalysisController implements Controller
 {
@@ -19,16 +19,25 @@ export default class SyntacticAnalysisController implements Controller
        let answer: compilationResponse;
 
        const tokenList = code ? await this.lexicalService.generateTokenList(this.symbols, code, logObj) : [];
-       const symbolTree: tree|[] = tokenList ? await this.SyntacticService.generateSymbolTree(this.symbols, tokenList, logObj): [];
+       
+       if(code) {
+            const symbolTree: tree = await this.SyntacticService.generateSymbolTree(this.symbols, tokenList, logObj);
 
-
-       answer = {
-        lexical: tokenList,
-        syntatic: symbolTree,
-        semantic: undefined,
-        errors: logObj.errors,
-        warnings: logObj.warnings
-       }
+            answer = {
+                lexical: tokenList,
+                syntactic: symbolTree,
+                errors: logObj.errors,
+                warnings: logObj.warnings
+            }
+            }
+        else
+        {
+            answer = {
+                lexical: tokenList,
+                errors: logObj.errors,
+                warnings: logObj.warnings
+            }
+        }
 
        return res.status(200).send(answer);
     }   
