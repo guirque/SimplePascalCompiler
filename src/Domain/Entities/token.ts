@@ -1,7 +1,7 @@
 type token = 
 {
     lexema: string;
-    classification?: string;
+    classification: string;
     line: number;
 };
 

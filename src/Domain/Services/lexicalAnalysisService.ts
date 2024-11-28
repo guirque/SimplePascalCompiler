@@ -1,20 +1,24 @@
 import token from "../Entities/token";
 import ILexicalAnalysis from "../Interfaces/ILexicalAnalysis";
+import log from "../Interfaces/Log";
 
 //With line identification
 export default class LexicalAnalysisService implements ILexicalAnalysis
 {
     constructor(){}
 
-    async generateTokenList(symbols: Object, code: string): Promise<token[]> {
+    async generateTokenList(symbols: Object, code: string, logObj: log): Promise<token[]> {
+
+        console.log("<Lexical> Running...");
 
         //Creating Regular Expression from Symbols object
         const listOfRegex = Object.values(symbols).map((regex:RegExp)=>regex.source);
         const languageRegex = new RegExp(`${listOfRegex.join('|')}`, 'ig');
-        console.log(languageRegex);
+        //console.log(languageRegex);
 
         //Separating Code into Lines
-        const lines = code.match(/[^\n]+/ig); 
+        let lines = code.split('\n');
+
         //Matching Lines Against Regular Expression
         const separatedElements = lines?.map((lineOfCode) => lineOfCode.match(languageRegex)); //lines with separated elements
 
@@ -29,12 +33,15 @@ export default class LexicalAnalysisService implements ILexicalAnalysis
                 let classification = 'ERROR';
                 //Find classification
                 symbolsList.find((pair:[string, RegExp])=>{
-                    if(pair[1].test(separatedElement))
+                    let comparisonRegEx = new RegExp(`^(${pair[1].source})$`);
+                    if(comparisonRegEx.test(separatedElement))
                         {
                             classification = pair[0];
                             return true;
                         }
                 });
+
+                //console.log(`tried ${separatedElement} and got ${classification}`);
     
                 //Insert token
                 const newToken: token = 
@@ -43,6 +50,9 @@ export default class LexicalAnalysisService implements ILexicalAnalysis
                     classification,
                     line: lineIndex+1
                 }
+                if(newToken.classification == 'ERROR')
+                    logObj.errors.push(`<Lexical> Unknown token '${newToken.lexema}', at line ${newToken.line}`);
+
                 answer.push(newToken);
             });
 

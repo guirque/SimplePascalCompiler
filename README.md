@@ -32,18 +32,22 @@ Aguarde até que apareça uma mensagem que indique que o servidor está rodando.
 
 ## Rotas
 
+### Observações
 
----
-
-``POST /lexicalAnalysis``  
-Retorna uma lista de tokens.  
-Corpo da requisição:
-```JSON
-body: 
+Todas as respostas das requisições abaixo seguem o formato descrito em ``CompilationResponse.ts``:
+```typescript
+export default interface compilationResponse
 {
-    "code": "codigo aqui"
+    lexical: token[],
+    syntactic?: tree,
+    semantic?: any,
+    errors?: string[],
+    warnings?: string[]
 }
 ```
+Em que:
+
+- ``lexical``: possui uma lista de tokens. 
 
 Estrutura do token:
 ```typescript
@@ -54,5 +58,37 @@ type token =
     line: number;
 };
 ```
+
+- ``syntactic``: possui uma árvore de símbolos.
+
+Estrutura da árvore:
+```typescript
+class tree 
+{
+    public children: tree[] = [];
+    constructor(public value: treeValue){}
+
+    addChild(node: tree)
+    {
+        this.children.push(node);
+    }
+}
+```
+
+Além disso, o corpo da requisição segue o formato:
+
+```JSON
+{
+    "code": "codigo aqui"
+}
+```
+
+### URLs
+
+``POST /LexicalAnalysis``  
+Retorna uma resposta com os campos ``lexical``, ``errors`` e ``warnings`` preenchidos.
+
+``POST /SyntacticAnalysis``  
+Retorna uma resposta com os campos ``lexical``, ``syntactic``, ``errors`` e ``warnings`` preenchidos.
 
 ---
