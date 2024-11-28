@@ -6,7 +6,7 @@ const simplePascalSymbols =
     VARIABLE : /var/,
     SEMICOLON : /\;/,
     COLON: /:/,
-    COMP_OPERATOR: />|<|==|!=|>=|<=/,
+    COMP_OPERATOR: />=|<=|>|<|==|!=/,
     MAT_OPERATOR: /\*|\/|\+|\-/,
     DOT: /\./,
     OPEN_P: /\(/,
