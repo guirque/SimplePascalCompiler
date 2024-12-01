@@ -22,12 +22,7 @@ docker compose up
 
 Isso vai configurar o ambiente e rodar o contêiner.
 
-Após isso ter sido feito, a cada vez que se quiser rodar novamente o contêiner, ou após modificações na configuração, podemos usar:
-
-```
-docker compose up --build
-```
-
+Após isso ter sido feito, a cada vez que se quiser rodar novamente o contêiner, pode-se executar o mesmo comando.  
 Aguarde até que apareça uma mensagem que indique que o servidor está rodando.
 
 ## Rotas
