@@ -70,6 +70,39 @@ class tree
 }
 ```
 
+- ``semantic``: possui uma tabela.
+
+Estrutura da tabela:
+```typescript
+type tableData = 
+{
+    Name: string;
+    Classification: string;
+    Type: string;
+    Block: string;
+    ArraySize: number;
+    ArrayType: string;
+    SpecialType: "array" | "record" | "standard";
+}
+
+class table
+{
+    constructor(){}
+
+    data: tableData[] = [];
+
+    addValue(newData: tableData)
+    {
+        this.data.push(newData);
+    }
+
+    getArray()
+    {
+        return this.data;
+    }
+}
+```
+
 Além disso, o corpo da requisição segue o formato:
 
 ```JSON
@@ -85,5 +118,8 @@ Retorna uma resposta com os campos ``lexical``, ``errors`` e ``warnings`` preenc
 
 ``POST /SyntacticAnalysis``  
 Retorna uma resposta com os campos ``lexical``, ``syntactic``, ``errors`` e ``warnings`` preenchidos.
+
+``POST /SemanticAnalysis``  
+Retorna uma resposta com os campos ``lexical``, ``syntactic``, ``semantic``, ``errors`` e ``warnings`` preenchidos.
 
 ---
