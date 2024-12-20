@@ -9,8 +9,6 @@ export default class LexicalAnalysisService implements ILexicalAnalysis
 
     async generateTokenList(symbols: Object, code: string, logObj: log): Promise<token[]> {
 
-        console.log("<Lexical> Running...");
-
         //Creating Regular Expression from Symbols object
         const listOfRegex = Object.values(symbols).map((regex:RegExp)=>regex.source);
         const languageRegex = new RegExp(`${listOfRegex.join('|')}`, 'ig');

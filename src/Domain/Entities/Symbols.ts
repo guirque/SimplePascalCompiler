@@ -6,6 +6,7 @@ const simplePascalSymbols =
     VARIABLE : /var/,
     SEMICOLON : /\;/,
     COLON: /:/,
+    NUMBER : /(\d+\.\d*)|\d+/,
     COMP_OPERATOR: />=|<=|>|<|==|!=/,
     MAT_OPERATOR: /\*|\/|\+|\-/,
     DOT: /\./,
@@ -36,7 +37,6 @@ const simplePascalSymbols =
     WRITE: /write/,
     READ: /read/,
     BOOLEAN: /true|false/,
-    NUMBER : /\d+|(\d+\.\d*)/,
     IDENTIFIER: /[a-zA-Z]([a-zA-Z0-9])*/,
     ERROR: /\S+/
 }
