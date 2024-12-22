@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "dev": "nodemon -L src/*.ts"
+    "dev": "nodemon -L src/*.ts",
+    "docker-start": "ts-node content/src/index.ts",
+    "docker-dev": "nodemon -L content/src/*.ts"
   },
   "author": "",
   "license": "ISC",

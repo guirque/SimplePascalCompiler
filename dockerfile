@@ -2,11 +2,11 @@ FROM node:18-slim
 
 WORKDIR /simplepascal/
 
-COPY package*.json /simplepascal/
+COPY package*.json .
+
+COPY . /content/
 
 RUN npm install
 
-COPY . /simplepascal/
-
-# CMD ["npm", "start"]
-CMD ["npm", "run", "dev"]
+#CMD ["npm", "run", "docker-dev"]
+CMD ["npm", "run", "docker-start"]
