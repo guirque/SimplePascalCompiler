@@ -4,6 +4,6 @@ services:
     ports:
       - ${PORT:-3000}:${PORT:-3000}
     volumes:
-      - .:/simplepascal/
+      - .:/simplepascal/content/
     env_file:
       - .env
