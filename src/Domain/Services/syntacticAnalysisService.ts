@@ -687,6 +687,7 @@ class syntacticRules
             newNode.addChild(this.IDENTIFIER());
             newNode.addChild(this.NOME());
         }
+        else this.treatErrorFirstSet(this.firstSet.COMANDO);
 
         return newNode;
     }
