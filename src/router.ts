@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import CreateLexicalAnalysisController from "./Infra/Factory/CreateLexicalAnalysisController";
-import CreateSyntacticAnalysisController from "./Infra/Factory/CreateSemanticAnalysisController";
+import CreateSyntacticAnalysisController from "./Infra/Factory/CreateSyntacticAnalysisController";
 import CreateSemanticAnalysisController from "./Infra/Factory/CreateSemanticAnalysisController";
 
 const router = Router();

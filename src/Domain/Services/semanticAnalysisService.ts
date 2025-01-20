@@ -48,14 +48,22 @@ function assureUnique(name: string, scope: string, tableObj: table): boolean
         });
 }
 
+const standardTypes = ["string", "integer", "boolean", "real"]
+
 function getVariables(symbolTree: tree, tableObj: table, scope: string, type: string, msgLog: log): void
 {
     //Go over each child node. If you find an identifier, that's a variable. Add it.
     if(symbolTree.value.value == 'IDENTIFIER'){
 
         let name = symbolTree.children[0].value.value;
-        const specialType =  getFromTable(tableObj, type, scope)?.SpecialType ?? "standard";
-        if(assureUnique(name, scope, tableObj))
+
+        let specialType: "array" | "standard" | "record" | undefined;
+        if(standardTypes.includes(type))  specialType = "standard";
+        else specialType =  getFromTable(tableObj, type, scope)?.SpecialType;
+
+        if(specialType != "standard" && !getFromTable(tableObj, type, scope)) addError(`Type ${type} has not been declared, yet it is mentioned in ${name} declaration.`, msgLog);
+
+        if(specialType && assureUnique(name, scope, tableObj))
             tableObj.addValue(
             {
                 Name: name,
@@ -140,14 +148,20 @@ function declareRotina(symbolTree: tree, tableObj: table, msgLog: log)
     const name = symbolTree.children[1].children[0].value.value;
     const isFunction = symbolTree.children[0].value.value == 'function';
     let type = "-";
+    let specialType: "array" | "standard" | "record" | undefined;
+
     if(isFunction)
     {
         let tipo_dado = symbolTree.children[4]
         type = tipo_dado.children[0].value.value == "IDENTIFIER" ? symbolTree.children[4].children[0].children[0].value.value : symbolTree.children[4].children[0].value.value;
+        if(standardTypes.includes(type))  specialType = "standard";
+        else specialType =  getFromTable(tableObj, type, name)?.SpecialType;
+    
+        if(specialType != "standard" && !getFromTable(tableObj, type, name)) addError(`Type ${type} has not been declared, yet it is mentioned in ${name} declaration.`, msgLog);
     }
+    else specialType = "standard";
 
-    const specialType =  getFromTable(tableObj, type, "GLOBAL")?.SpecialType ?? "standard";
-    if(assureUnique(name, "GLOBAL", tableObj))
+    if(specialType && assureUnique(name, "GLOBAL", tableObj))
         tableObj.addValue(
         {
             Name: name,
@@ -172,7 +186,7 @@ function declareRotina(symbolTree: tree, tableObj: table, msgLog: log)
                 Type: type,
                 ArraySize: 0,
                 ArrayType: '-',
-                SpecialType: 'standard'
+                SpecialType: specialType ?? "standard"
             });
     }
 
@@ -328,9 +342,12 @@ function declareRecordFields(symbolTree: tree, scope: string, tableObj: table, m
         const identifier = symbolTree.children[0];
         let name = identifier.children[0].value.value;
 
-        const specialType =  getFromTable(tableObj, type, scope)?.SpecialType ?? "standard";
+        let specialType: "array" | "standard" | "record" | undefined;
+        if(standardTypes.includes(type))  specialType = "standard";
+        else specialType =  getFromTable(tableObj, type, scope)?.SpecialType;
+        if(specialType != "standard" && !getFromTable(tableObj, type, scope)) addError(`Type ${type} has not been declared, yet it is mentioned in ${name} declaration.`, msgLog);
 
-        if(assureUnique(name, scope, tableObj))
+        if(specialType && assureUnique(name, scope, tableObj))
             tableObj.addValue(
             {
                 Name: name,
