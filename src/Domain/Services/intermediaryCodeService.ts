@@ -1,9 +1,9 @@
 import { IntermediaryCode } from "../Entities/IntermediaryCode";
 import table, { tableData } from "../Entities/Table";
 import tree from "../Entities/tree";
+import { getFromNode } from "../Helpers/getFromNode";
 import IIntermediaryCode from "../Interfaces/IIntermediaryCode";
 import log from "../Interfaces/Log";
-import { getFromNode } from "../helpers/getFromNode";
 
 // There are 3 types of object code generations (commands):
 // Declarations: set up storage space (variables)
