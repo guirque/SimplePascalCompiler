@@ -1,9 +1,9 @@
-import { ObjectCode } from "../Entities/ObjectCode";
+import { IntermediaryCode } from "../Entities/IntermediaryCode";
 import table, { tableData } from "../Entities/Table";
 import tree from "../Entities/tree";
-import IObjectCode from "../Interfaces/IObjectCode";
+import IIntermediaryCode from "../Interfaces/IIntermediaryCode";
 import log from "../Interfaces/Log";
-import { getFromNode } from "./helpers/getFromNode";
+import { getFromNode } from "../helpers/getFromNode";
 
 // There are 3 types of object code generations (commands):
 // Declarations: set up storage space (variables)
@@ -55,7 +55,7 @@ function getFromTable(tableValues: tableData[], name: string, scope: string): ta
     return tableValues.find((register)=>register.Name==name && register.Block == scope) ?? tableValues.find((register)=>register.Name==name && register.Block == "GLOBAL");
 }
 
-function getVariables(symbolTree: tree, scope: string, msgLog: log, answer: ObjectCode): void
+function getVariables(symbolTree: tree, scope: string, msgLog: log, answer: IntermediaryCode): void
 {
     //Go over each child node. If you find an identifier, that's a variable. Add it.
     if(symbolTree.value.value == 'IDENTIFIER'){
@@ -68,7 +68,7 @@ function getVariables(symbolTree: tree, scope: string, msgLog: log, answer: Obje
         if(symbolTree.value.value != 'TIPO_DADO') getVariables(symbolTree.children[i], scope, msgLog, answer);
 }
 
-function getConstant(symbolTree: tree, tableValyes: tableData[], scope: string, msgLog: log, answer: ObjectCode)
+function getConstant(symbolTree: tree, tableValyes: tableData[], scope: string, msgLog: log, answer: IntermediaryCode)
 {
     // CONSTANTE -> (const) [ID] (=) [CONST_VALOR] (;)
     const id = symbolTree.children[1].children[0].value.value;
@@ -195,7 +195,7 @@ function inferTypeFromValue(symbolTree:tree, tableValues: tableData[], msgLog: l
 // Loops -----------------------------------
 
 // Execute browse for all commands inside this.
-function whileCmds(symbolTree: tree, tableObj: table, scope: string, msgLog: log, answer: ObjectCode, counterObj: counter)
+function whileCmds(symbolTree: tree, tableObj: table, scope: string, msgLog: log, answer: IntermediaryCode, counterObj: counter)
 {
 
 }
@@ -215,7 +215,7 @@ type expVars = {
     varScope: string[];
 }
 const EXP_NODE_NAMES = ['EXP', 'PARAM_LOGICO', 'EXP_CONST'];
-function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: ObjectCode, scope: string, counterObj: counter, vars:expVars, i:number)
+function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: IntermediaryCode, scope: string, counterObj: counter, vars:expVars, i:number)
 {
     // EXP always works by starting with a PARAMETER, followed by an operator of some sort, and then another EXP
     // It's better to evaluate expressions on the way back from the recursion (right to left)
@@ -387,16 +387,16 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
 
 // Evaluates EXP, inserts corresponding code and returns a string with the name of the variable in which the result was stored.
 // In case of non-temporary variables, their names come with -<scope>
-function runEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: ObjectCode, scope: string, counterObj: counter): string | undefined
+function runEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: IntermediaryCode, scope: string, counterObj: counter): string | undefined
 {
     const vars:expVars = {firstValue: [], opFound: [], op: [], lastValue: [], varScope: []}
     const result = registerEXP(symbolTree, tableValues, msgLog, answer, scope, counterObj, vars, 0);
     return vars.finalTemp ?? result;
 }
 
-function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: ObjectCode, scope: string, counterObj: counter, mainBlockNode: tree)
+function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: IntermediaryCode, scope: string, counterObj: counter, mainBlockNode: tree)
 {
-    const endOfNode: ObjectCode = []; //list of commands to be inserted after this node and its children are done being executed.
+    const endOfNode: IntermediaryCode = []; //list of commands to be inserted after this node and its children are done being executed.
     let iterate = true; //when true, allows exploration of subnodes of the current node.
 
     if(symbolTree == mainBlockNode)
@@ -617,12 +617,12 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
     endOfNode.forEach((command: string)=> answer.push(command));
 }
 
-export default class ObjectCodeService implements IObjectCode
+export default class IntermediaryCodeService implements IIntermediaryCode
 {
     constructor(){}
-    async generateObjectCode(symbolTree: tree, tableValues: tableData[], msgObj: log): Promise<ObjectCode> {
+    async generateIntermediaryCode(symbolTree: tree, tableValues: tableData[], msgObj: log): Promise<IntermediaryCode> {
         
-        const answer: ObjectCode = [];
+        const answer: IntermediaryCode = [];
         const counterObj: counter = {for: 0, while: 0, if: 0, else: 0, exit: 0, temp: 0, elseStack: [], exitStack: []};
         const mainBlockNode = symbolTree.children[1];
         browseTree(symbolTree, tableValues, msgObj, answer, "GLOBAL", counterObj, mainBlockNode);

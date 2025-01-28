@@ -1,6 +1,6 @@
-import table, { tableData } from "../../Entities/Table";
-import tree from "../../Entities/tree";
-import log from "../../Interfaces/Log";
+import table, { tableData } from "../Entities/Table";
+import tree from "../Entities/tree";
+import log from "../Interfaces/Log";
 
 type info = 
 {

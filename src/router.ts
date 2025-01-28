@@ -1,9 +1,9 @@
 import { Router } from "express";
 
+import CreateIntermediaryCodeController from "./Infra/Factory/CreateIntermediaryCodeController";
 import CreateLexicalAnalysisController from "./Infra/Factory/CreateLexicalAnalysisController";
-import CreateSyntacticAnalysisController from "./Infra/Factory/CreateSyntacticAnalysisController";
 import CreateSemanticAnalysisController from "./Infra/Factory/CreateSemanticAnalysisController";
-import CreateObjectCodeController from "./Infra/Factory/CreateObjectCodeController";
+import CreateSyntacticAnalysisController from "./Infra/Factory/CreateSyntacticAnalysisController";
 
 const router = Router();
 
@@ -17,6 +17,6 @@ router.post('/SyntacticAnalysis', async (req, res) => {(await CreateSyntacticAna
 
 router.post('/SemanticAnalysis', async (req, res) => {(await CreateSemanticAnalysisController()).execute(req, res);});
 
-router.post('/ObjectCode', async (req, res) => {(await CreateObjectCodeController()).execute(req, res);});
+router.post('/IntermediaryCode', async (req, res) => {(await CreateIntermediaryCodeController()).execute(req, res);});
 
 export default router;

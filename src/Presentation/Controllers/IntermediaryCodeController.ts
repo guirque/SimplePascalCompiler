@@ -1,18 +1,18 @@
 import { Request, Response } from "express";
 
-import { ObjectCode } from "../../Domain/Entities/ObjectCode";
+import { IntermediaryCode } from "../../Domain/Entities/IntermediaryCode";
 import tree from "../../Domain/Entities/tree";
 import compilationResponse from "../../Domain/Interfaces/CompilationResponse";
 import Controller from "../../Domain/Interfaces/Controller";
+import IIntermediaryCode from "../../Domain/Interfaces/IIntermediaryCode";
 import ILexicalAnalysis from "../../Domain/Interfaces/ILexicalAnalysis";
-import IObjectCode from "../../Domain/Interfaces/IObjectCode";
 import ISemanticAnalysis from "../../Domain/Interfaces/ISemanticAnalysis";
 import ISyntacticAnalysis from "../../Domain/Interfaces/ISyntacticAnalysis";
 import log from "../../Domain/Interfaces/Log";
 
-export default class ObjectCodeController implements Controller
+export default class IntermediaryCodeController implements Controller
 {
-    constructor(private symbols: Object, private lexicalService: ILexicalAnalysis, private SyntacticService: ISyntacticAnalysis, private SemanticService: ISemanticAnalysis, private ObjectCodeService: IObjectCode){};
+    constructor(private symbols: Object, private lexicalService: ILexicalAnalysis, private SyntacticService: ISyntacticAnalysis, private SemanticService: ISemanticAnalysis, private IntermediaryCodeService: IIntermediaryCode){};
 
     async execute(req: Request, res: Response): Promise<any> {
 
@@ -28,13 +28,13 @@ export default class ObjectCodeController implements Controller
 
             const table = await this.SemanticService.generateTable(symbolTree, logObj);
 
-            const objectCode: ObjectCode = logObj.errors.length == 0 ? await this.ObjectCodeService.generateObjectCode(symbolTree, table, logObj) : ['ERROR'];
+            const intermediaryCode: IntermediaryCode = logObj.errors.length == 0 ? await this.IntermediaryCodeService.generateIntermediaryCode(symbolTree, table, logObj) : ['ERROR'];
 
             answer = {
                 lexical: tokenList,
                 syntactic: symbolTree,
                 semantic: table,
-                objectCode: objectCode,
+                intermediaryCode: intermediaryCode,
                 errors: logObj.errors,
                 warnings: logObj.warnings
             }

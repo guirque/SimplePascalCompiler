@@ -3,7 +3,7 @@ import token from "../Entities/token";
 import tree from "../Entities/tree";
 import log from "./Log";
 
-export default interface IObjectCode
+export default interface IIntermediaryCode
 {
-    generateObjectCode(symbolTree: tree, tableObj: tableData[], msgObj: log) : Promise<any>
+    generateIntermediaryCode(symbolTree: tree, tableObj: tableData[], msgObj: log) : Promise<any>
 }

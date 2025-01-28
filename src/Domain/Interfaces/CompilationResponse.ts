@@ -6,7 +6,7 @@ export default interface compilationResponse
     lexical: token[],
     syntactic?: tree,
     semantic?: any,
-    objectCode?: any,
+    intermediaryCode?: any,
     errors?: string[],
     warnings?: string[]
 }
