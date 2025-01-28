@@ -1,7 +1,7 @@
 import { IntermediaryCode } from "../Entities/IntermediaryCode";
 import table, { tableData } from "../Entities/Table";
 import tree from "../Entities/tree";
-import { getFromNode } from "../Helpers/getFromNode";
+import { getFromNode, info } from "../Helpers/getFromNode";
 import IIntermediaryCode from "../Interfaces/IIntermediaryCode";
 import log from "../Interfaces/Log";
 
@@ -192,6 +192,17 @@ function inferTypeFromValue(symbolTree:tree, tableValues: tableData[], msgLog: l
     return "-";
 }
 
+// Returns a record field as a string of format fieldId-scope-scope-...
+function getRecordFieldNameString(elementInfo: info): string
+{
+    const recordScopes =  elementInfo?.record_scopes?.reverse();
+    let recordVar = '-';
+    if(recordScopes) recordVar = recordScopes[0].id + '-' + recordScopes.map((data)=>{
+        return data.scope;
+    }).join('-');
+
+    return recordVar;
+}
 // Loops -----------------------------------
 
 // Execute browse for all commands inside this.
@@ -262,6 +273,33 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
             //Result
             vars.firstValue[i] = `res`;
             vars.varScope[i] = '';
+        }
+        // Array Analysis
+        else if(elementInfo?.specialType == 'array')
+        {
+            // ARRAY ANALYSIS
+
+            // LOADING ARRAY DATA
+            // Get offset (MUL index 8)
+            // Get position (ADD temp address offset)
+            // Pull data from memory (LOD res )
+
+            const offsetVar = `offset${counterObj.temp++}`;
+            const result = `temp${counterObj.temp++}`;
+
+            answer.push(`MUL ${offsetVar} ${elementInfo?.arrayIndex} 8`);
+            answer.push(`ADD ${result} ${elementInfo?.id}-${elementInfo?.scope} ${offsetVar}`);
+            answer.push(`LOD ${result} ${result}`);
+            vars.firstValue[i] = result;
+            vars.varScope[i] = elementInfo?.scope ?? '';     
+        }
+        // Record Analysis
+        else if(elementInfo?.classification == 'RECORD_FIELD')
+        {
+            let recordVar = getRecordFieldNameString(elementInfo);
+
+            vars.firstValue[i] = recordVar ?? '';
+            vars.varScope[i] = elementInfo?.scope ?? '';
         }
         // Average Scenario (variables, constants and values)
         else
@@ -461,8 +499,25 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
                 // Running EXP and getting variable with result
                 const temp = runEXP(ATRIBUICAO.children[1], tableValues, msgLog, answer, scope, counterObj);
 
-                // Result
-                answer.push(`MOV ${elementInfo?.id}-${elementInfo?.scope} ${temp}`);
+                // Assignment
+
+                // If it's an assignment to an array
+                if(elementInfo?.specialType == 'array')
+                {
+                    const offsetVar = `offset${counterObj.temp++}`;
+                    const result = `temp${counterObj.temp++}`;
+        
+                    answer.push(`MUL ${offsetVar} ${elementInfo?.arrayIndex} 8`);
+                    answer.push(`ADD ${result} ${elementInfo?.id}-${elementInfo?.scope} ${offsetVar}`);
+                    answer.push(`STR ${temp} ${result}`); //storing temp in memory
+                }
+                // If it's an assignment to a record
+                else if(elementInfo?.classification == 'RECORD_FIELD')
+                {
+                    const recordVar = getRecordFieldNameString(elementInfo);
+                    answer.push(`MOV ${recordVar} ${temp}`);
+                }
+                else answer.push(`MOV ${elementInfo?.id}-${elementInfo?.scope} ${temp}`);
 
                 break;
             case 'while':

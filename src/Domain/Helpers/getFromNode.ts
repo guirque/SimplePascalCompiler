@@ -2,7 +2,9 @@ import table, { tableData } from "../Entities/Table";
 import tree from "../Entities/tree";
 import log from "../Interfaces/Log";
 
-type info = 
+type recordScopeType = {id: string; scope: string; type: string}[]; 
+
+export type info = 
 {
     classification?: "ROTINA" | "CONSTANTE" | "TIPO" | "RECORD_FIELD" | "VARIABLE" | "ROTINA" | "PARAMETER" | string; 
     id?: string;
@@ -14,6 +16,7 @@ type info =
     type?: string;
     value?: any;
     arguments?: info[];
+    record_scopes?: recordScopeType;
 }
 
 function getFromTable(tableValues: tableData[], name: string, scope: string): tableData | undefined
@@ -23,7 +26,7 @@ function getFromTable(tableValues: tableData[], name: string, scope: string): ta
 
 // Receives a node and returns an object containing relevant info regarding the value, variable or routine it finds.
 // Makes use of the table.
-export function getFromNode(symbolTree: tree, tableValues: tableData[], scope: string, msgLog: log, last_type:string="-", last_id:string="GLOBAL"): info | undefined
+export function getFromNode(symbolTree: tree, tableValues: tableData[], scope: string, msgLog: log, last_type:string="-", last_id:string="GLOBAL", record_scopes:recordScopeType=[]): info | undefined
 {
     const firstChild = symbolTree.children[0];
 
@@ -85,13 +88,14 @@ export function getFromNode(symbolTree: tree, tableValues: tableData[], scope: s
             case ".":
                 // If there are still NOMEs that have children, keep going.
                 const ID_VALUE = symbolTree.children[1].children[0].value.value;
-                    //console.log(`Seen value of ${ID_VALUE} after '.'\nscope=${scope}, of type ${last_type}`)
+                //console.log(`Seen value of ${ID_VALUE} after '.'\nscope=${scope}, of type ${last_type}`);
+                record_scopes.push({id: ID_VALUE, scope: scope, type: last_type});
                 scope = ID_VALUE;
                 const OTHER_NOME = symbolTree.children[2];
                 const tableData = getFromTable(tableValues, ID_VALUE, last_type);
                 if(OTHER_NOME.children.length != 0)
                 {
-                    return getFromNode(OTHER_NOME, tableValues, scope, msgLog, tableData?.Type, ID_VALUE);
+                    return getFromNode(OTHER_NOME, tableValues, scope, msgLog, tableData?.Type, ID_VALUE, record_scopes);
                 }
                 // Otherwise, return ID
                 else
@@ -102,7 +106,8 @@ export function getFromNode(symbolTree: tree, tableValues: tableData[], scope: s
                             id: tableData.Name,
                             scope: tableData.Block,
                             type: tableData.Type,
-                            specialType: tableData.SpecialType
+                            specialType: tableData.SpecialType,
+                            record_scopes: record_scopes
                         }
                 }
                 break;
@@ -114,7 +119,7 @@ export function getFromNode(symbolTree: tree, tableValues: tableData[], scope: s
                 if(tableData1)
                     return {
                         classification: tableData1.Classification,
-                        id: tableData1.Name + "[...]",
+                        id: tableData1.Name,
                         scope: tableData1.Block,
                         type: arrayTypeData?.ArrayType,
                         arraySize: arrayTypeData?.ArraySize,
