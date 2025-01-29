@@ -220,6 +220,8 @@ type expVars = {
     opFound:boolean[];
     op:string[];
     finalTemp?: string;
+    opLogico?:string;
+    lastTempOpLogico?:string;
 
     /** Holds the last id or value found.*/
     lastValue: string[];
@@ -309,11 +311,15 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
         }
 
     }
-    else if(['OP_MAT', 'OP_LOGICO', 'OP_COMP'].includes(symbolTree.value.value ) )
+    else if(vars.op[i] && ['and', 'or'].includes(vars.op[i])) // Found 'and' or 'or'
+    {
+        vars.opLogico = vars.op[i];
+        vars.lastTempOpLogico = vars.lastValue[i];
+    }
+    if(['OP_MAT', 'OP_LOGICO', 'OP_COMP'].includes(symbolTree.value.value ) )
     {
         vars.opFound[i]= true;
         vars.op[i] = symbolTree.children[0].value.value;
-        //console.log(`${vars.op[i]}, com i = ${i}`);
     }
     
     if(EXP_NODE_NAMES.includes(symbolTree.value.value))
@@ -405,15 +411,32 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
                         answer.push(`EQL ${temporaryVar} ${value2} ${value1}`);
                         answer.push(`LES ${temporaryVar} ${temporaryVar} 1`); //inverts result
                         break;
-                    case "and":
-                        answer.push(`# and vai aqui! Valores recebidos: ${temporaryVar} ${value2} ${value1}`);
-                        break;
                 }
                 
                 // Adding to counterObj.temp for next run.
                 counterObj.temp++;
 
                 vars.finalTemp = temporaryVar;
+
+                if(vars.opLogico)
+                {
+                    let newTemporaryVar = `temp${counterObj.temp}`;
+                    
+                    if(vars.opLogico == 'and')
+                    {
+                        answer.push(`AND ${newTemporaryVar} ${temporaryVar} ${vars.lastTempOpLogico}`);
+                    }
+                    else if(vars.opLogico == 'or')
+                    {
+                        answer.push(`OR ${newTemporaryVar} ${temporaryVar} ${vars.lastTempOpLogico}`);
+                    }
+                    
+                    temporaryVar = newTemporaryVar;
+                    vars.finalTemp = temporaryVar;
+
+                    counterObj.temp++;
+                }
+
                 return temporaryVar;
             }
         else if(vars.firstValue[i])
