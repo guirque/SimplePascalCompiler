@@ -1,5 +1,6 @@
 import token from "../Entities/token";
 import tree from "../Entities/tree";
+import { getFromNode } from "../Helpers/getFromNode";
 import ISemanticAnalysis from "../Interfaces/ISemanticAnalysis";
 import log from "../Interfaces/Log";
 
@@ -440,9 +441,9 @@ function assureAssigned(symbolTree:tree, tableObj: table, scope: string, msgLog:
 function assureOperationsOfSameType(symbolTree: tree, tableObj:table, scope: string, msgLog: log, type: string):string
 {
 
-    if((symbolTree.value.value == 'PARAMETRO' && symbolTree.children[0].value.value != 'IDENTIFIER') || symbolTree.value.value == 'IDENTIFIER')
+    if(symbolTree.value.value == 'PARAMETRO')
     {
-        const localType = inferTypeFromValue(symbolTree, tableObj, msgLog, scope);
+        const localType = getFromNode(symbolTree, tableObj.getArray(), scope, msgLog)?.type ?? '-'; //inferTypeFromValue(symbolTree, tableObj, msgLog, scope);
         type = localType;
     }
 
@@ -450,6 +451,7 @@ function assureOperationsOfSameType(symbolTree: tree, tableObj:table, scope: str
     {
         const receivedType:string = assureOperationsOfSameType(symbolTree.children[i], tableObj, scope, msgLog, type);
         if(type == '-') type = receivedType;
+        else if([receivedType, type].includes('real') && [receivedType, type].includes('integer')) type = 'real';
         else if(type != '-' && receivedType != type) 
             addError(`Values of types ${receivedType} and ${type} can't be in an operation together, as they're incompatible.`, msgLog);
     }
@@ -458,22 +460,23 @@ function assureOperationsOfSameType(symbolTree: tree, tableObj:table, scope: str
 
 function assureCompatibleAssignment(symbolTree: tree, tableObj: table, scope: string, msgLog: log)
 {
+    // COMANDO -> [ID] [NOME] := [ATRIBUICAO]
     const id = symbolTree.children[0].children[0].value.value;
         
     // Local definitions are prioritized
-    const receivingEnd = tableObj.getArray().find((register)=>register.Name==id && register.Block == scope) ?? tableObj.getArray().find((register)=>register.Name==id && register.Block == "GLOBAL");
+    const receivingEnd = getFromNode(symbolTree, tableObj.getArray(), scope, msgLog);
 
     const atribuicaoNode = symbolTree.children[2];
     const valueType = inferTypeFromValue(atribuicaoNode, tableObj, msgLog, scope);
 
     if(receivingEnd && valueType == 'ROTINA')
-        addError(`'${receivingEnd.Name}' is being assigned a procedure or function. Did you mean to call the routine?`, msgLog);
+        addError(`'${receivingEnd?.id}' is being assigned a procedure or function. Did you mean to call the routine?`, msgLog);
 
-    if(receivingEnd && receivingEnd.Classification != 'VARIABLE')
-        addError(`'${receivingEnd.Name}' is not a variable, and cannot be assigned a value.`, msgLog);
+    if(receivingEnd && !(receivingEnd.classification == 'VARIABLE' || receivingEnd.classification == 'RECORD_FIELD'))
+        addError(`'${receivingEnd?.id}' is not a variable, and cannot be assigned a value.`, msgLog);
 
-    if(receivingEnd && (!(receivingEnd.Type == valueType) && !(receivingEnd.Type == 'real' && valueType == 'integer')))
-        addError(`Variable '${receivingEnd.Name}', of type ${receivingEnd.Type}, can't be assigned value of type ${valueType}.`, msgLog);
+    if(receivingEnd && (!(receivingEnd?.type == valueType) && !(receivingEnd?.type == 'real' && valueType == 'integer')))
+        addError(`Variable or record field '${receivingEnd?.id}', of type ${receivingEnd?.type}, can't be assigned value of type ${valueType}.`, msgLog);
 }
 
 // Pushes all arguments passed to a routine to a given list. Receives [NOME] as an input.
