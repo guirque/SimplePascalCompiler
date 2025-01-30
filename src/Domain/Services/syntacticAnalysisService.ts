@@ -259,8 +259,11 @@ class syntacticRules
         if(this.currentTokenIs('BLOCK_BEGIN'))
         {
             newNode.addChild(this.treatTerminal('BLOCK_BEGIN'));
-            newNode.addChild(this.COMANDO());
-            newNode.addChild(this.LISTA_COM());
+            if(this.currentTokenIsInFirst(this.firstSet.COMANDO))
+            {
+                newNode.addChild(this.COMANDO());
+                newNode.addChild(this.LISTA_COM());
+            }
             newNode.addChild(this.treatTerminal('BLOCK_END'));
         }
         else this.treatError('BLOCK_BEGIN');
@@ -763,14 +766,10 @@ class syntacticRules
     {
         let newNode = new tree({value: "DECLARACOES", type: "NON-TERMINAL"});
 
-        if(this.currentTokenIsInFirst(this.firstSet.DEF_CONST))
-        {
-            newNode.addChild(this.DEF_CONST());
-            newNode.addChild(this.DEF_TIPOS());
-            newNode.addChild(this.DEF_VAR());
-            newNode.addChild(this.DEF_ROTINA());
-        }
-        else this.treatErrorFirstSet(this.firstSet.DEF_CONST);
+        newNode.addChild(this.DEF_CONST());
+        newNode.addChild(this.DEF_TIPOS());
+        newNode.addChild(this.DEF_VAR());
+        newNode.addChild(this.DEF_ROTINA());
 
         return newNode;
     }
@@ -800,10 +799,8 @@ export default class SyntacticAnalysisService implements ISyntacticAnalysis
         catch(error)
         {
             if(error == 'tokenListOver') console.log('<!> fim de lista');
-            else console.log('<!> Houve um erro');
 
             result = new tree({value: "ERROR", type: "NON-TERMINAL"});
-
         }
 
         return result;
