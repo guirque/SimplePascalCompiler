@@ -28,6 +28,7 @@ function getFromTable(tableValues: tableData[], name: string, scope: string): ta
 // Makes use of the table.
 export function getFromNode(symbolTree: tree, tableValues: tableData[], scope: string, msgLog: log, last_type:string="-", last_id:string="GLOBAL", record_scopes:recordScopeType=[]): info | undefined
 {
+    if(!symbolTree) return undefined;
     const firstChild = symbolTree.children[0];
 
     if(symbolTree.value.value == "PARAMETRO") 

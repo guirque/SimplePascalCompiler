@@ -8,5 +8,6 @@ export default interface compilationResponse
     semantic?: any,
     intermediaryCode?: any,
     errors?: string[],
-    warnings?: string[]
+    warnings?: string[],
+    console?: string[]
 }
