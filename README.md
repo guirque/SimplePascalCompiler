@@ -36,8 +36,10 @@ export default interface compilationResponse
     lexical: token[],
     syntactic?: tree,
     semantic?: any,
+    intermediaryCode?: any,
     errors?: string[],
-    warnings?: string[]
+    warnings?: string[],
+    console?: string[]
 }
 ```
 Em que:
@@ -103,6 +105,13 @@ class table
 }
 ```
 
+- ``intermediaryCode``: possui uma lista de comandos.
+
+Estrutura da lista:
+```typescript
+export type IntermediaryCode = string[];
+```
+
 Além disso, o corpo da requisição segue o formato:
 
 ```JSON
@@ -121,5 +130,8 @@ Retorna uma resposta com os campos ``lexical``, ``syntactic``, ``errors`` e ``wa
 
 ``POST /SemanticAnalysis``  
 Retorna uma resposta com os campos ``lexical``, ``syntactic``, ``semantic``, ``errors`` e ``warnings`` preenchidos.
+
+``POST /IntermediaryCode``  
+Retorna uma resposta com os campos ``lexical``, ``syntactic``, ``semantic``, ``intermediaryCode``, ``errors``, ``warnings`` e ``console`` preenchidos.
 
 ---
