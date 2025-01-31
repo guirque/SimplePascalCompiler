@@ -449,11 +449,13 @@ function assureOperationsOfSameType(symbolTree: tree, tableObj:table, scope: str
 
     for(let i = 0; i < symbolTree.children.length; i++)
     {
-        const receivedType:string = assureOperationsOfSameType(symbolTree.children[i], tableObj, scope, msgLog, type);
-        if(type == '-') type = receivedType;
-        else if([receivedType, type].includes('real') && [receivedType, type].includes('integer')) type = 'real';
-        else if(type != '-' && receivedType != type) 
-            addError(`Values of types ${receivedType} and ${type} can't be in an operation together, as they're incompatible.`, msgLog);
+        if(symbolTree.children[i].value.value != 'NOME'){
+            const receivedType:string = assureOperationsOfSameType(symbolTree.children[i], tableObj, scope, msgLog, type);
+            if(type == '-') type = receivedType;
+            else if([receivedType, type].includes('real') && [receivedType, type].includes('integer')) type = 'real';
+            else if(type != '-' && receivedType != type) 
+                addError(`Values of types ${receivedType} and ${type} can't be in an operation together, as they're incompatible.`, msgLog);
+        }
     }
     return type;
 }
@@ -472,7 +474,7 @@ function assureCompatibleAssignment(symbolTree: tree, tableObj: table, scope: st
     if(receivingEnd && valueType == 'ROTINA')
         addError(`'${receivingEnd?.id}' is being assigned a procedure or function. Did you mean to call the routine?`, msgLog);
 
-    if(receivingEnd && !(receivingEnd.classification == 'VARIABLE' || receivingEnd.classification == 'RECORD_FIELD'))
+    if(receivingEnd && !(receivingEnd.classification == 'VARIABLE' || receivingEnd.classification == 'RECORD_FIELD' || receivingEnd.classification == 'PARAMETER'))
         addError(`'${receivingEnd?.id}' is not a variable, and cannot be assigned a value.`, msgLog);
 
     if(receivingEnd && (!(receivingEnd?.type == valueType) && !(receivingEnd?.type == 'real' && valueType == 'integer')))
