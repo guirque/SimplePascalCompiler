@@ -201,6 +201,8 @@ function getRecordFieldNameString(elementInfo: info): string
         return data.scope;
     }).join('-');
 
+    console.log(elementInfo.record_scopes, recordVar);
+
     return recordVar;
 }
 // Loops -----------------------------------
@@ -269,7 +271,7 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
                     answer.push(`MOV ${declarationParameters[i].Name}-${declarationParameters[i].Block} ${argumentPassed}`);
                 })
 
-            answer.push(`PSH ${answer.length+3}`);
+            answer.push(`PSH ${answer.length+2}`);
             answer.push(`JMP ${elementInfo?.id}`);
 
             //Result
@@ -286,11 +288,9 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
             // Get position (ADD temp address offset)
             // Pull data from memory (LOD res )
 
-            const offsetVar = `offset${counterObj.temp++}`;
             const result = `temp${counterObj.temp++}`;
 
-            answer.push(`MUL ${offsetVar} ${elementInfo?.arrayIndex} 8`);
-            answer.push(`ADD ${result} ${elementInfo?.id}-${elementInfo?.scope} ${offsetVar}`);
+            answer.push(`ADD ${result} ${elementInfo?.id}-${elementInfo?.scope} ${elementInfo?.arrayIndex}`);
             answer.push(`LOD ${result} ${result}`);
             vars.firstValue[i] = result;
             vars.varScope[i] = elementInfo?.scope ?? '';     
@@ -381,30 +381,38 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
                             return temp4
                         */
                         answer.push(`# Running '<='`);
-                        const lessResult = `temp${++counterObj.temp}`, eqlResult = `temp${++counterObj.temp}`;
-                        answer.push(`LES ${lessResult} ${value2} ${value1}`);
-                        answer.push(`EQL ${eqlResult} ${value2} ${value1}`);
+                        // Opposite of >
+                        answer.push(`LES ${temporaryVar} ${value1} ${value2}`);
+                        answer.push(`LES ${temporaryVar} ${temporaryVar} 1`); //invert result
 
-                        temporaryVar = `temp${++counterObj.temp}`; //final result will be stored here
-                        answer.push(`ADD ${temporaryVar} ${lessResult} ${eqlResult}`);
-                        answer.push(`LES ${temporaryVar} 0 temp${counterObj.temp}`);
+                        // const lessResult = `temp${++counterObj.temp}`, eqlResult = `temp${++counterObj.temp}`;
+                        // answer.push(`LES ${lessResult} ${value2} ${value1}`);
+                        // answer.push(`EQL ${eqlResult} ${value2} ${value1}`);
+
+                        // temporaryVar = `temp${++counterObj.temp}`; //final result will be stored here
+                        // answer.push(`ADD ${temporaryVar} ${lessResult} ${eqlResult}`);
+                        // answer.push(`LES ${temporaryVar} 0 temp${counterObj.temp}`);
                         answer.push(`# End of '<='`);
 
                         break;
                     case ">":
-                        answer.push(`LES ${value1} ${value2}`); //just invert the order of elements.
+                        answer.push(`LES ${temporaryVar} ${value1} ${value2}`); //just invert the order of elements.
                         break;
                     case ">=":
-                        // Just like <=, but inverting the LES command.
-                        answer.push(`# Running '>='`);
-                        const lessResult1 = `temp${++counterObj.temp}`, eqlResult1 = `temp${++counterObj.temp}`;
-                        answer.push(`LES ${lessResult1} ${value1} ${value2}`);
-                        answer.push(`EQL ${eqlResult1} ${value2} ${value1}`);
+                        // Opposite of <
 
-                        temporaryVar = `temp${++counterObj.temp}`; //final result will be stored here
-                        answer.push(`ADD ${temporaryVar} ${lessResult1} ${eqlResult1}`);
-                        answer.push(`LES ${temporaryVar} 0 temp${counterObj.temp}`);
-                        answer.push(`# End of '>='`);
+                        answer.push(`# Running '>='`);
+                        answer.push(`LES ${temporaryVar} ${value2} ${value1}`);
+                        answer.push(`LES ${temporaryVar} ${temporaryVar} 1`); //invert result
+
+                        // const lessResult1 = `temp${++counterObj.temp}`, eqlResult1 = `temp${++counterObj.temp}`;
+                        // answer.push(`LES ${lessResult1} ${value1} ${value2}`);
+                        // answer.push(`EQL ${eqlResult1} ${value2} ${value1}`);
+
+                        // temporaryVar = `temp${++counterObj.temp}`; //final result will be stored here
+                        // answer.push(`ADD ${temporaryVar} ${lessResult1} ${eqlResult1}`);
+                        // answer.push(`LES ${temporaryVar} 0 temp${counterObj.temp}`);
+                        // answer.push(`# End of '>='`);
                         break;
                     case "!=":
                         //Verify if they're equal and invert the result.
@@ -424,11 +432,19 @@ function registerEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, an
                     
                     if(vars.opLogico == 'and')
                     {
-                        answer.push(`AND ${newTemporaryVar} ${temporaryVar} ${vars.lastTempOpLogico}`);
+                        answer.push(`ADD ${newTemporaryVar} ${temporaryVar} ${vars.lastTempOpLogico}`);
+                        answer.push(`LES ${newTemporaryVar} 1 ${newTemporaryVar}`);
+                        
+                        //ADD temp a b
+                        //LES result 1 temp (if both conditions are met, 1 < temp)
                     }
                     else if(vars.opLogico == 'or')
                     {
-                        answer.push(`OR ${newTemporaryVar} ${temporaryVar} ${vars.lastTempOpLogico}`);
+                        answer.push(`ADD ${newTemporaryVar} ${temporaryVar} ${vars.lastTempOpLogico}`);
+                        answer.push(`LES ${newTemporaryVar} 0 ${newTemporaryVar}`);
+
+                        //ADD temp a b
+                        //LES result 0 temp (if any conditions are met, 0 < temp)
                     }
                     
                     temporaryVar = newTemporaryVar;
@@ -455,7 +471,7 @@ function runEXP(symbolTree: tree, tableValues: tableData[], msgLog: log, answer:
     return vars.finalTemp ?? result;
 }
 
-function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: IntermediaryCode, scope: string, counterObj: counter, mainBlockNode: tree)
+function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, answer: IntermediaryCode, scope: string, counterObj: counter, mainBlockNode: tree, scheduledMainBlockCommands: string[])
 {
     const endOfNode: IntermediaryCode = []; //list of commands to be inserted after this node and its children are done being executed.
     let iterate = true; //when true, allows exploration of subnodes of the current node.
@@ -463,6 +479,15 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
     if(symbolTree == mainBlockNode)
     {
         answer.push(`# Main`);
+        answer.push(...scheduledMainBlockCommands);
+    }
+
+    if(symbolTree.value.value == 'CONSTANTE')
+    {
+        const id = symbolTree.children[1].children[0].value.value;
+        const temp = runEXP(symbolTree.children[3].children[0], tableValues, msgLog, answer, scope, counterObj);
+
+        scheduledMainBlockCommands.push(`MOV ${id}-${scope} ${temp}`);
     }
     
     // Every time you get into a function, that's a different scope
@@ -480,12 +505,12 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
                 return tableValue.Block == node_info?.Name;
             });
 
-        for(const scopeVar of scopeVariables)
+        for(const scopeVar of scopeVariables.slice(1))
         {
             //Stacking
             answer.push(`PSH ${scopeVar.Name}-${scopeVar.Block}`);
         }
-        for(const scopeVar of scopeVariables.reverse())
+        for(const scopeVar of scopeVariables.reverse().slice(0, -1))
         {
             //Scheduling unstacking
             endOfNode.push(`POP ${scopeVar.Name}-${scopeVar.Block}`);
@@ -527,11 +552,8 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
                 // If it's an assignment to an array
                 if(elementInfo?.specialType == 'array')
                 {
-                    const offsetVar = `offset${counterObj.temp++}`;
                     const result = `temp${counterObj.temp++}`;
-        
-                    answer.push(`MUL ${offsetVar} ${elementInfo?.arrayIndex} 8`);
-                    answer.push(`ADD ${result} ${elementInfo?.id}-${elementInfo?.scope} ${offsetVar}`);
+                    answer.push(`ADD ${result} ${elementInfo?.id}-${elementInfo?.scope} ${elementInfo?.arrayIndex}`);
                     answer.push(`STR ${temp} ${result}`); //storing temp in memory
                 }
                 // If it's an assignment to a record
@@ -554,11 +576,11 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
                     exit:
                 */
                 // (while)  [EXP_COM]  (do) [BLOCO_COM]
-                answer.push(`\n# WHILE COMMAND`);
+                answer.push(`# WHILE COMMAND`);
+                answer.push(`while${counterObj.while}:`);
 
                 // Running EXP_COM
                 const temp1 = runEXP(symbolTree.children[1], tableValues, msgLog, answer, scope, counterObj);
-                answer.push(`while${counterObj.while}:`);
                 
                 answer.push(`LES ${temp1} ${temp1} 1`); //invert boolean result
                 answer.push(`JNZ exit${counterObj.exit} ${temp1}`);
@@ -621,7 +643,7 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
                 const assignmentValue = getFromNode(FOR_node.children[2], tableValues, scope, msgLog);
                 const limit = getFromNode(FOR_node.children[4], tableValues, scope, msgLog);
 
-                answer.push(`\n# FOR COMMAND`);
+                answer.push(`# FOR COMMAND`);
 
                 const limitString = limit?.id ? `${limit?.id}-${limit?.scope}` : limit?.value;
                 const assignmentString = assignmentValue?.id ? `${assignmentValue?.id}-${assignmentValue?.scope}` : assignmentValue?.value;
@@ -688,7 +710,7 @@ function browseTree(symbolTree: tree, tableValues: tableData[], msgLog: log, ans
     // Iterating (if allowed) ----------
     if(iterate) for(const node of symbolTree.children)
     {
-        browseTree(node, tableValues, msgLog, answer, scope, counterObj, mainBlockNode);
+        browseTree(node, tableValues, msgLog, answer, scope, counterObj, mainBlockNode, scheduledMainBlockCommands);
     }
 
     // Adding End Commands
@@ -703,7 +725,7 @@ export default class IntermediaryCodeService implements IIntermediaryCode
         const answer: IntermediaryCode = [];
         const counterObj: counter = {for: 0, while: 0, if: 0, else: 0, exit: 0, temp: 0, elseStack: [], exitStack: []};
         const mainBlockNode = symbolTree.children[1];
-        browseTree(symbolTree, tableValues, msgObj, answer, "GLOBAL", counterObj, mainBlockNode);
+        browseTree(symbolTree, tableValues, msgObj, answer, "GLOBAL", counterObj, mainBlockNode, []);
         return answer;
     }
 
