@@ -8,5 +8,5 @@ COPY . /content/
 
 RUN npm install
 
-#CMD ["npm", "run", "docker-dev"]
-CMD ["npm", "run", "docker-start"]
+CMD ["npm", "run", "docker-dev"]
+#CMD ["npm", "run", "docker-start"]
